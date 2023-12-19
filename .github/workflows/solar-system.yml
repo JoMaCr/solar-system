@@ -86,7 +86,7 @@ jobs:
     
     docker:
       name: Containeization
-      needs: unit_testing, code_coverage
+      needs: [unit-testing, 'code-coverage']
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
@@ -94,6 +94,6 @@ jobs:
 
         - name: Dockerhub Login
           uses: docker/login-action@v3
-            with:
+          with:
               username: ${{ vars.DOCKERHUB_USERNAME }}
               password: ${{ vars.DOCKERHUB_PASSWORD }}
