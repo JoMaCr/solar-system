@@ -64,11 +64,11 @@ jobs:
           with:
             node-version: 18
 
-        - name: Cache NPM dependendies
-          uses: actions/chache@v3
-          with:
-              path: node_modules
-              key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+        #- name: Cache NPM dependendies
+        #  uses: actions/chache@v3
+        #  with:
+        #      path: node_modules
+        #      key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
     
         - name: Install Dependencies
           run: npm install
