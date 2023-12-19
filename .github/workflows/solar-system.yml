@@ -127,12 +127,6 @@ jobs:
             echo Testing Image URL using wget
             wget -q -O - 127.0.0.1:3000/live | grep live
 
-        
-        #- name: Set up environment
-        #  run: |
-        #    ORIGINAL_STRING=github.repository_owne
-        #    REPOSITORY_OWNER_LOWERCASE=$(echo github.repository_owner | tr '[:upper:]' '[:lower:]')
-
         - name: Container Registry Push
           uses: docker/build-push-action@v5
           with:
@@ -140,4 +134,5 @@ jobs:
             push: true
             tags: |
               ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
-              gchr.io/jomacr/solar-system:${{ github.sha }}
+              gchr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+        
