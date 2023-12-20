@@ -189,6 +189,8 @@ jobs:
             kubectl version --short
             echo ---------------------------------------------------------
             kubectl get nodes
+            echo ---------------------------------------------------------
+            kubectl -n ingress-nginx get services ingress-nginx-controller
  
         #- name: Build image 
         #  run: | 
