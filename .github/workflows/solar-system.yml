@@ -184,19 +184,31 @@ jobs:
           id: minikube
           uses: medyagh/setup-minikube@latest
 
-        - name: Start Nginx ingress controller
-          run: 
-            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+        - name: Enable NGINX Ingress
+          run: |
+            minikube addons enable ingress
+            kubectl get pods -n ingress-nginx
+
+        - name: Deploy And Expose Hello World App
+          run: |
+            kubectl create deployment web --image=gcr.io/google-samples/hello-app:1.0
+            kubectl expose deployment web --type=NodePort --port=8080
+            kubectl get service web
+            minikube service web --url
+
+        #- name: Start Nginx ingress controller
+        #  run: 
+        #    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 
           # now you can run kubectl to see the pods in the cluster
-        - name: Run test kubectl output
-          run: |
-            kubectl get pods -A
-            kubectl version --short
-            echo ---------------------------------------------------------
-            kubectl get nodes
-            echo ---------------------------------------------------------
-            kubectl -n ingress-nginx get services ingress-nginx-controller
+        #- name: Run test kubectl output
+        #  run: |
+        #    kubectl get pods -A
+        #    kubectl version --short
+        #    echo ---------------------------------------------------------
+        #    kubectl get nodes
+        #    echo ---------------------------------------------------------
+        #    kubectl -n ingress-nginx get services ingress-nginx-controller
  
         #- name: Build image 
         #  run: | 
@@ -220,25 +232,25 @@ jobs:
         # echo ---------------------------------------------------------
         #  kubectl get nodes
 
-        - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
-          run:
-            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
+      #  - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
+      #    run:
+      #      echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
 
-        - name: Replace Token in Manifest files
-          uses: cschleiden/replace-tokens@v1
-          with:
-            tokenPrefix: '_{_'
-            tokenSuffix: '_}_'
-            files: '["kubernetes/development/*.yaml"]'
-          env:
-            NAMESPACE: ${{ vars.NAMESPACE }}
-            REPLICAS: ${{ vars.REPLICAS }}
-            IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
-            INGRESS_IP: ${{ env.INGRESS_IP }}
+      #  - name: Replace Token in Manifest files
+      #    uses: cschleiden/replace-tokens@v1
+      #    with:
+      #      tokenPrefix: '_{_'
+      #      tokenSuffix: '_}_'
+      #      files: '["kubernetes/development/*.yaml"]'
+      #    env:
+      #      NAMESPACE: ${{ vars.NAMESPACE }}
+      #      REPLICAS: ${{ vars.REPLICAS }}
+      #      IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+      #      INGRESS_IP: ${{ env.INGRESS_IP }}
             
-        - name: Deploy to minikube
-          run: 
-            kubectl apply -f kubernetes/development
+      #  - name: Deploy to minikube
+      #    run: 
+      #      kubectl apply -f kubernetes/development
               
         #- name: Test service URLs
         #  run: | 
