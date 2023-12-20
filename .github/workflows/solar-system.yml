@@ -15,13 +15,14 @@ env:
 jobs:
     unit-testing:
         name: Unit Testing
+        # Test several os and framework versions
         strategy:
           matrix:
             nodejs_version: [18, 20]
             os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         container:
-          image: ${{ matrix.nodejs_version }}
+          image: node:${{ matrix.nodejs_version }}
         steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
