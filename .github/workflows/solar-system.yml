@@ -269,6 +269,9 @@ jobs:
             #
         - name: Check namespace
           run: kubectl config current-context
+
+        - name: Set namespace
+          run: kubectl config set-context --current --namespace=development
             
         - name: Deploy to minikube
           run: 
