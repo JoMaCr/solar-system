@@ -185,16 +185,25 @@ jobs:
           uses: medyagh/setup-minikube@latest
 
         - name: Enable NGINX Ingress
-          run: |
+          run:
             minikube addons enable ingress
-            kubectl get pods -n ingress-nginx
 
-        - name: Deploy And Expose Hello World App
-          run: |
+        - name: Verify that the NGINX Ingress controller is running
+          run: kubectl get pods -n ingress-nginx
+
+        - name: Create a Deployment (Hello World) using the following command
+          run:
             kubectl create deployment web --image=gcr.io/google-samples/hello-app:1.0
-            kubectl expose deployment web --type=NodePort --port=8080
+
+        - name: Expose the Deployment
+          run: kubectl expose deployment web --type=NodePort --port=8080
+        
+        - name: Verify the Service is created and is available on a node port
+          run:
             kubectl get service web
-            minikube service web --url
+
+        - name: Visit the Service via NodePort
+          run: minikube service web --url
 
         #- name: Start Nginx ingress controller
         #  run: 
