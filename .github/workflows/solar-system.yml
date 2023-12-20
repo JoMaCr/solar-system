@@ -236,7 +236,7 @@ jobs:
             
         - name: Deploy to minikube
           run: 
-            kubectl apply -f kubernetes/development.yaml
+            kubectl apply -f kubernetes/development
               
         #- name: Test service URLs
         #  run: | 
