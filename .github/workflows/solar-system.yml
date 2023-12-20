@@ -15,6 +15,16 @@ env:
 jobs:
     unit-testing:
         name: Unit Testing
+        strategy:
+          matrix:
+            nodejs_version: [18,20]
+            os: [ubuntu-latest]
+            exclude:
+              - nodejs_version: 18
+                os: macos-latest
+        runs-on: ${{ matrix.os }}
+        container:
+          image: node:${{ matrix.nodejs_version }}
         services:
           mongo-db:
             image: min80/mongo-db:non-prod
@@ -24,22 +34,14 @@ jobs:
           MONGO_URI: 'mongodb://localhost:27017/superData'
           MONGO_USERNAME: non-prod-user
           MONGO_PASSWORD: non-prod-password
-        strategy:
-          matrix:
-            nodejs_version: [18,20]
-            os: [ubuntu-latest]
-            exclude:
-              - nodejs_version: 18
-                os: macos-latest
-        runs-on: ${{ matrix.os }}
         steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
 
-        - name: Setup NodeJS Version - ${{ matrix.nodejs_version }}
-          uses: actions/setup-node@v3
-          with:
-            node-version: ${{ matrix.nodejs_version }}
+        #- name: Setup NodeJS Version - ${{ matrix.nodejs_version }}
+        #  uses: actions/setup-node@v3
+        #  with:
+        #    node-version: ${{ matrix.nodejs_version }}
     
         - name: Cache NPM dependendies
           uses: actions/cache@v3
