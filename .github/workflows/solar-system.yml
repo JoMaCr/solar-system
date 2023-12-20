@@ -198,6 +198,9 @@ jobs:
 
         - name: Expose the Deployment
           run: kubectl expose deployment web --type=NodePort --port=8080
+
+        - name: Wait for pods
+          uses: CodingNagger/minikube-wait-action@v1.0.1
         
         - name: Verify the Service is created and is available on a node port
           run: |
