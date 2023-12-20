@@ -15,7 +15,7 @@ env:
 jobs:
     unit-testing:
         name: Unit Testing
-        permissions: read-all
+        #permissions: read-all
         strategy:
           matrix:
             nodejs_version: [18,20]
