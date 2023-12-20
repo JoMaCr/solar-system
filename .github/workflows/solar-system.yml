@@ -205,6 +205,10 @@ jobs:
         - name: Visit the Service via NodePort
           run: minikube service web --url
 
+        - name: Visit the Service via NodePort (Curl)
+          run: 
+            curl minikube service web --url 
+
         #- name: Start Nginx ingress controller
         #  run: 
         #    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
