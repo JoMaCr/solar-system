@@ -159,3 +159,33 @@ jobs:
         #      ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
         #      gchr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
         
+    dev-deploy:
+      name: Deploy Docker container
+      needs: docker
+      runs-on: ubuntu-latest
+      steps:
+        #checkout repository
+        - name: Checkout Repository For Deploying
+          uses: actions/checkout@v4
+
+        #install dependencies
+        - name: Install kubectl CLI
+          uses: azure/setup-kubectl@v3 # use action from marketplace to install kubectl (otherwise do it step by step)
+          with:
+            version: 'v1.26.0' # default is latest stable
+
+        - name: Set Kubeconfig
+          uses: azure/k8s-set-context@v3
+          with:
+            method: kubeconfig
+            kubeconfig: ${{ secrets.KUBECONGIG }}
+
+        - name: Fetch Kubernetes Cluster Details
+          run: |
+            kubectl version --short
+            echo ---------------------------------------------------------
+            kubectl get nodes
+            
+        #do your job
+
+
