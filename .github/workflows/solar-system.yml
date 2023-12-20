@@ -21,7 +21,7 @@ jobs:
             os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         container:
-          image: ${{ matrix.nodejs_version }}#node:20
+          image: ${{ matrix.nodejs_version }}
         steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
