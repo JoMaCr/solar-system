@@ -184,7 +184,11 @@ jobs:
 
           # now you can run kubectl to see the pods in the cluster
         - name: kubectl
-          run: kubectl get pods -A
+          run: |
+            kubectl get pods -A
+            kubectl version --short
+            echo ---------------------------------------------------------
+            kubectl get nodes
  
         #- name: Build image 
         #  run: | 
@@ -205,12 +209,12 @@ jobs:
         #- name: Fetch Kubernetes Cluster Details
         #  run: |
         #    kubectl version --short
-          # echo ---------------------------------------------------------
-          #  kubectl get nodes
+        # echo ---------------------------------------------------------
+        #  kubectl get nodes
 
         - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
           run:
-            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB:ENV
+            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
 
         - name: Replace Token in Manifest files
           uses: cschleiden/replace-tokens@v1
