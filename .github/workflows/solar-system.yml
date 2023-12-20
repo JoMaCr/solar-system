@@ -266,6 +266,9 @@ jobs:
             REPLICAS: ${{ vars.REPLICAS }}
             IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
             INGRESS_IP: ${{ env.INGRESS_IP }}
+            #
+        - name: Check namespace
+          run: kubectl config current-context
             
         - name: Deploy to minikube
           run: 
