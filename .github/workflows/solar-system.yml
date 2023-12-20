@@ -194,16 +194,7 @@ jobs:
             echo -n "verifying images:"
             docker images
 
-        - name: Deploy to minikube
-          run: 
-            kubectl apply -f deploy/deploy-minikube.yaml
-            
-        - name: Test service URLs
-          run: | 
-            minikube service list
-            minikube service discover --url
-            echo -n "------------------opening the service------------------"
-            curl $(minikube service discover --url)/version
+        
 
         #- name: Set Kubeconfig
         #  uses: azure/k8s-set-context@v3
@@ -217,6 +208,10 @@ jobs:
           # echo ---------------------------------------------------------
           #  kubectl get nodes
 
+        - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
+          run:
+            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB:ENV
+
         - name: Replace Token in Manifest files
           uses: cschleiden/replace-tokens@v1
           with:
@@ -227,7 +222,18 @@ jobs:
             NAMESPACE: ${{ vars.NAMESPACE }}
             REPLICAS: ${{ vars.REPLICAS }}
             IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
-            #INGRESS_IP:            
+            INGRESS_IP: ${{ env.INGRESS_IP }}
+            
+        #- name: Deploy to minikube
+        #  run: 
+        #    kubectl apply -f kubernetes/development.yaml
+              
+        #- name: Test service URLs
+        #  run: | 
+        #    minikube service list
+        #    minikube service discover --url
+        #    echo -n "------------------opening the service------------------"
+        #    curl $(minikube service discover --url)/version
         #do your job
 
 
