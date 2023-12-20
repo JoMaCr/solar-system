@@ -186,13 +186,13 @@ jobs:
         - name: kubectl
           run: kubectl get pods -A
  
-        - name: Build image 
-          run: | 
-            export SHELL=/bin/bash
-            eval $(minikube -p minikube docker-env)
-            make build-image
-            echo -n "verifying images:"
-            docker images
+        #- name: Build image 
+        #  run: | 
+        #    export SHELL=/bin/bash
+        #    eval $(minikube -p minikube docker-env)
+        #    make build-image
+        #    echo -n "verifying images:"
+        #    docker images
 
         
 
