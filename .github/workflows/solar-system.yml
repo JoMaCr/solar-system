@@ -163,6 +163,8 @@ jobs:
       name: Deploy Docker container
       needs: docker
       runs-on: ubuntu-latest
+      environment:
+        name: development
       steps:
         #checkout repository
         - name: Checkout Repository For Deploying
