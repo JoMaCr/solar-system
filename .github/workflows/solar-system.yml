@@ -182,6 +182,10 @@ jobs:
           id: minikube
           uses: medyagh/setup-minikube@latest
 
+        - name: Start Nginx ingress controller
+          run: 
+            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+
           # now you can run kubectl to see the pods in the cluster
         - name: Run test kubectl output
           run: |
@@ -213,10 +217,6 @@ jobs:
         #    kubectl version --short
         # echo ---------------------------------------------------------
         #  kubectl get nodes
-        - name: Start Nginx ingress controller
-          run: 
-            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
-
 
         - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
           run:
