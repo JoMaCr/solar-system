@@ -315,5 +315,6 @@ jobs: # Jeder workflow besteht aus einer Anzahl von Jobs, die bei der Pipeline d
         #    echo -n "------------------opening the service------------------"
         #    curl $(minikube service discover --url)/version
         #do your job
+        
 
 
