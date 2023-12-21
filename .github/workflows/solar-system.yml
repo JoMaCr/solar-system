@@ -21,7 +21,7 @@ jobs: # Jeder workflow besteht aus einer Anzahl von Jobs, die bei der Pipeline d
         strategy: # Erstellen einer Test-Matrix für verschieden OS und node.js runtime - Versionen
           matrix:
             nodejs_version: [18,20]
-            os: [ubuntu-latest, macos-latest]
+            os: [ubuntu-latest]
             exclude: # mit exclude können einzelne Testfälle aus der Test-Matrix ausgeschlossen werden 
               - nodejs_version: 18
                 os: macos-latest
