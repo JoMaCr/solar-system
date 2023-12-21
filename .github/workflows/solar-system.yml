@@ -1,112 +1,141 @@
 name: Solar System Workflow
 
-on: 
-  workflow_dispatch:
-  push:
+on: # hier wird spezifizeiert auf welches Event der Workflow gtriggert wird
+  workflow_dispatch: # manulles Ausloesen des Workflows über den Reiter "Actions" in GitHub
+  push: # Starten des Workflows bei jedem "push" in das Repository
     branches:
-      - main
+      - main # starte Workflow nur bei "push" in main oder feature branches
       - 'feature/*'
 
-env:
-  MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+env: # für den workflow können lokale environment variables angelegt werden (auf workflow-, job-, step-Ebene)
+  MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData' # Diese Variablen dienen zum login der MongoDb-Datenbank. Diese werden für mehrere jobs benötigt
   MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
   MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     
-jobs:
-    unit-testing:
-        name: Unit Testing
-        #permissions: read-all
-        strategy:
+jobs: # Jeder workflow besteht aus einer Anzahl von Jobs, die bei der Pipeline durchlaufen werden. Jeder Job beschreibt einen Schritt der Pipeline (testing->coverage->build)
+
+    # ---- #3 Job Unit Tests ----------------------------------------------------------------------------------------------------------------------------------------------  
+    unit-testing: # Der erste Job ist die Durchführung der Unit-Tests
+        # -------------- 
+        name: Unit Testing 
+        strategy: # Erstellen einer Test-Matrix für verschieden OS und node.js runtime - Versionen
           matrix:
             nodejs_version: [18,20]
-            os: [ubuntu-latest]
-            exclude:
+            os: [ubuntu-latest, macos-latest]
+            exclude: # mit exclude können einzelne Testfälle aus der Test-Matrix ausgeschlossen werden 
               - nodejs_version: 18
                 os: macos-latest
-        runs-on: ${{ matrix.os }}
-        container:
-          image: node:${{ matrix.nodejs_version }}
-        services:
+        runs-on: ${{ matrix.os }}  # Für jeden Job wird temporär eine VM angelegt. Hier wird das benötigte OS der VM festgelegt. 
+                                   # Im Falle einer Test-Matrix, werden mehrere VMs angelegt und das OS über Variable matrix.os übergeben.  
+        container: # Die Test-Umgebung soll in  Containern ablaufen. Ein Container der node.js RunTime und als Service die mongoDb Datenbank
+          image: node:${{ matrix.nodejs_version }} # Für den Runtime-Container muss das image für die benötigte Version festgelegt werden. GitHub actions zieht sich das image automatisch  
+        services: # Die Test-Umgebung benötigt Zugriff auf eine Entwicklungs-Datenbank (nicht die ProduktivDatenbank). Dazu wurde in DockerHub eine Kopie des Images für eine Entwicklungs-Datenbank erstellt.
           mongo-db:
-            image: min80/mongo-db:non-prod
+            image: min80/mongo-db:non-prod # image ist in DockerHub zu finden
             options:
-              --name mongo
+              --name mongo # Label zum ansprechen der DB
         env:
-          MONGO_URI: 'mongodb://mongo:27017/superData'
+          MONGO_URI: 'mongodb://mongo:27017/superData' # Erstelle lokale jobspezifische Zugangsvariablen für die Entwicklungs-DB
           MONGO_USERNAME: non-prod-user
           MONGO_PASSWORD: non-prod-password
-        steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
+        # --------------    
+        steps: 
+        # Ein Job unteilt sich in steps, die abgearbeitet werden müssen. Jeder step besteht zumindest aus einem Namen und einer Aufgabe (uses, run)
 
-        #- name: Setup NodeJS Version - ${{ matrix.nodejs_version }}
+        # 1. Step: Checkout Repository
+        - name: Checkout Repository # In der Regel ist der erste Step, dass das Repository auf der VM ausgecheckt werden muss.
+          uses: actions/checkout@v4 # Für solch vielfach benötigten Aufgaben, können vorgefertigte "actions" verwendet. Solche "actions" können im
+                                    # GitHub Marketplace gefunden: 'https://github.com/marketplace?category=&query=&type=actions&verification=' gefunden
+                                    # und verwendet. Zum Ausführen einer action wird der key "uses" verwendet.
+
+        #- name: Setup NodeJS Version - ${{ matrix.nodejs_version }} # wurde auskommentiert wegen Test-Matrix ansonsten folgt als nächster step das setup der runtime über eine action
         #  uses: actions/setup-node@v3
         #  with:
         #    node-version: ${{ matrix.nodejs_version }}
-    
-        - name: Cache NPM dependendies
+
+        # 2. Step: Check dependencies availale
+        - name: Cache NPM dependendies # Werden workflows mehrfach durchlaufen, koennen benoetigte Abhängigkeiten gecacht werden. Das verkürzt die Ausführzeit des workflows.  
           uses: actions/cache@v3
           with:
-            path: node_modules
-            key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+            path: node_modules # Die dependencies werden im Ordner node_modules abgelegt. Falls die Dependencies bereits erstellt wurden, ist dieser Ordner vorhanden.
+            key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }} # In dem Ordner wird ein Key abgelegt, die mit dem bestimmt werden kann, ob sich die Datei package-lock.json geändert hat
+        
+        
+        # Bis zu diesem Punkt wurden ausschließlich vorbereitende steps für den job Unit-Test durchgeführt. Ab hier beginnt der eigentliche Job:
 
-        - name: Install Dependencies
-          run: npm install
-    
+        # 3. Step: Installiere alle benötigten Dependencies (package.json, package-lock.json)  
+        - name: Install Dependencies 
+          run: npm install # Der gleiche Befehl, der auch lokal ausgeführt wird...
+        
+        # 4. Step: Starte die Unit-Tests
         - name: Unit Testing
           id: nodejs-unit-testing-step
-          run: npm test
-          
+          run: npm test # mocha app-test.js
+         
+        # 5. Step: Archivire die Test-Ergebnisse
         - name: Archive Test Result
+          # Die Test-Ergebnisse sollen gespeichert werden auch wenn Unit-Test einen Fehler liefert 
           if: always() 
-          uses: actions/upload-artifact@v3
+          uses: actions/upload-artifact@v3 # Verwende action von GitHub Marketplace für upload
           with:
-            name: Mocha-Test-Result
-            path: test-results.xml
+            name: Mocha-Test-Result 
+            path: test-results.xml # Filename
 
+    # ---- #2 Job Code Coverage ----------------------------------------------------------------------------------------------------------------------------------------------
     code-coverage:
+      #------------------------------------------------------------------------------------
+      # Für jeden Job wird eine weitere VM angelegt. Aus diesem Grund muss die Grundkonfiguration für jeden Job neu definiert werden
         name: Code Coverage
-        container:
+        container: 
           image: node:18
-        services:
+        services: # Entwicklungsdatenbank von DockerHub
           mongo-db:
             image: min80/mongo-db:non-prod
             options:
               --name mongo
-        env:
+        env: # lokale Credentials
           MONGO_URI: 'mongodb://mongo:27017/superData'
           MONGO_USERNAME: non-prod-user
           MONGO_PASSWORD: non-prod-password
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest # um den Aufwand für Demo zu minimieren hier kein Test-Matrix
+        # ----------------------------------------------------------------------------------
         steps:
+        
+        # 1. Step: 
         - name: Checkout Repository
           uses: actions/checkout@v4
 
-        #- name: Setup NodeJS Version - 18
-        #  uses: actions/setup-node@v3
-        #  with:
-        #    node-version: 18
-
+        # 2. Step:
         - name: Cache NPM dependendies
           uses: actions/cache@v3
           with:
               path: node_modules
               key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
-    
+
+        # 3. Step
+        - name: Setup NodeJS Version - 18
+          uses: actions/setup-node@v3
+          with:
+            node-version: 18
+
+        # 4. Step
         - name: Install Dependencies
           run: npm install
-    
+        
+        # 5. Step
         - name: Check Code Coverage
           continue-on-error: true
           run: npm run coverage
-          
+        
+        # 6. Step
         - name: Archive Test Result
           uses: actions/upload-artifact@v3
           with:
             name: Code-Coverage-Result
             path: coverage
             retention-days: 5
-    
+
+    # ---- #3 Job Containerization ----------------------------------------------------------------------------------------------------------------------------------------------
     docker:
       name: Containerization
       needs: [unit-testing, 'code-coverage']
@@ -144,21 +173,35 @@ jobs:
               -e MONGO_PASSWORD=$MONGO_PASSWORD \
               ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
             
-            #export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAdress}}{{end}}' solar-system-app)
+            #export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
             #echo $IP
 
             echo Testing Image URL using wget
             wget -q -O - 127.0.0.1:3000/live | grep live
 
-        #- name: Container Registry Push
-        #  uses: docker/build-push-action@v5
-        #  with:
-        #    context: .
-        #    push: true
-        #    tags: |
-        #      ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+        - name: Container Registry Push
+          uses: docker/build-push-action@v5
+          with:
+            context: .
+            push: true
+            tags:
+              ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
         #      gchr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
         
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
     #dev-deploy:
     #  name: Dev-Deploy
     #  needs: docker
