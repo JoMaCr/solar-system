@@ -11,6 +11,7 @@ env: # für den workflow können lokale environment variables angelegt werden (a
   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData' # Diese Variablen dienen zum login der MongoDb-Datenbank. Diese werden für mehrere jobs benötigt
   MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
   MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+  
     
 jobs: # Jeder workflow besteht aus einer Anzahl von Jobs, die bei der Pipeline durchlaufen werden. Jeder Job beschreibt einen Schritt der Pipeline (testing->coverage->build)
 
